@@ -10,13 +10,13 @@ import pprint
 
 class Wheel:
 
-    def __init__(self, config, recipe=None):
+    def __init__(self, config, recipe=[]):
         self.logseverity = {'error':1, 'info':2, 'debug':3}
         self.config = config
-        self.recipe = recipe if recipe else {}
+        self.recipe = recipe
 
     def log(self, msg, severity='info', level=0):
-        if self.logseverity[severity] <= self.logseverity[self.config.get('logging').get('severity', 'info')]:
+        if self.logseverity[severity] <= self.logseverity[self.config.get('logging', {}).get('severity', 'info')]:
            print('== {}'.format(' '*level+str(msg)))
 
     def runner(self):
@@ -24,19 +24,19 @@ class Wheel:
         Iterates wheelhouse:jobs and trigger invidual wheels defined
 
         wheelhouse:
-          jobs:
+          job:
             <job_name>:
               recipe:
                 - <wheel_name>
         """
 
-        for job_nm in self.recipe.get('jobs', {}):
-            job = self.config['jobs'][job_nm]
+        for job_nm in self.recipe:
+            job = self.config['job'][job_nm]
 
             self.log('Job: {}'.format(job_nm))
 
-            for wheel_nm in job.get('wheels', {}):
-                wheel = self.config['wheels'][wheel_nm]
+            for wheel_nm in job.get('wheel', {}):
+                wheel = self.config['wheel'][wheel_nm]
 
                 self.log('wheel: {}'.format(wheel_nm))
                 self.run(wheel_nm, wheel)
@@ -64,7 +64,7 @@ class Wheel:
         z.update(y)    # modifies z with y's keys and values & returns None
         return z
 
-class WheelSalt(Wheel):
+class SaltWheel(Wheel):
 
     def __init__(self, config, recipe=None):
         Wheel.__init__(self, config, recipe=recipe)
@@ -158,18 +158,18 @@ if __name__ == '__main__':
         image:  tcpcloud/salt-formulas
         logging:
           severity: info
-        jobs:
-            init:
-                wheels:
+        job:
+            initdb:
+                wheel:
                     - initdb
                 logging:
                     severity: debug
             cron_data_prunning:
-                wheels:
+                wheel:
                     - minion_influxdb_config
                     - delete_data
             dummy_test:
-                wheels:
+                wheel:
                     - minion_influxdb_config
                     - dummy_direct_sls_invocation
         pillar:
@@ -218,7 +218,7 @@ if __name__ == '__main__':
                             user: fluentd
                             database: h2o_measurement
                             privilege: all
-        wheels:
+        wheel:
             initdb:
                 state.apply:
                     - influxdb.client
@@ -265,6 +265,5 @@ if __name__ == '__main__':
                     #       ...
 
     """)
-    recipe = {'jobs': ['init', 'dummy_test']}
-    wheel = WheelSalt(config, recipe=recipe)
-    wheel.runner()
+    recipe = ['initdb', 'dummy_test']
+    SaltWheel(config, recipe=recipe).runner()
