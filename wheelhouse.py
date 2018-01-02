@@ -9,16 +9,17 @@ from glob import glob
 import ruamel.yaml
 import pprint
 
+
 class Wheel:
 
     def __init__(self, config, recipe=[]):
-        self.logseverity = {'error':1, 'info':2, 'debug':3}
+        self.logseverity = {'error': 1, 'info': 2, 'debug': 3}
         self.config = config
         self.recipe = recipe
 
     def log(self, msg, severity='info', level=0):
         if self.logseverity[severity] <= self.logseverity[self.config.get('logging', {}).get('severity', 'info')]:
-           print('== {}'.format(' '*level+str(msg)))
+            print('== {}'.format(' ' * level + str(msg)))
 
     def runner(self):
         """
@@ -50,10 +51,10 @@ class Wheel:
 
     def dictify(self, _dict):
         for k in _dict.keys():
-          if isinstance(_dict[k], ruamel.yaml.comments.CommentedMap):
-             _dict[k] = self.dictify(dict(_dict[k]))
-          #elif isinstance(_dict[k], ruamel.yaml.comments.CommentedSeq):
-             #_dict[k] = list(_dict[k])
+            if isinstance(_dict[k], ruamel.yaml.comments.CommentedMap):
+                _dict[k] = self.dictify(dict(_dict[k]))
+            # elif isinstance(_dict[k], ruamel.yaml.comments.CommentedSeq):
+                #_dict[k] = list(_dict[k])
         return _dict
 
     def safeMergeDict(self, x, y):
@@ -64,6 +65,7 @@ class Wheel:
         z = x.copy()   # start with x's keys and values
         z.update(y)    # modifies z with y's keys and values & returns None
         return z
+
 
 class SaltWheel(Wheel):
 
@@ -80,7 +82,7 @@ class SaltWheel(Wheel):
         # https://docs.saltstack.com/en/latest/ref/clients/
 
         __opts__ = salt.config.minion_config('/etc/salt/minion')
-        default_config  = dict(ruamel.yaml.YAML().load("""\
+        default_config = dict(ruamel.yaml.YAML().load("""\
         file_client: local
         master: localhost
         file_roots:
@@ -89,7 +91,7 @@ class SaltWheel(Wheel):
         retcode_passthrough: true
         """.format('/usr/share/salt-formulas/env')))
         __opts__ = self.safeMergeDict(__opts__, default_config)
-        __opts__ = self.safeMergeDict(__opts__, self.config.get('config', {}).get('salt', {}).get('minion', {}) )
+        __opts__ = self.safeMergeDict(__opts__, self.config.get('config', {}).get('salt', {}).get('minion', {}))
         # TODO, __opts__ = self.safeMergeDict(__opts__, pillar:salt:minion:config)
         self.salt_config = __opts__
         return salt.client.Caller(mopts=self.salt_config)
@@ -109,7 +111,7 @@ class SaltWheel(Wheel):
 
         for fn, values in wheel.items():
 
-            states= []
+            states = []
             salt_c = self.client()
             os.chdir(self.salt_config.get('file_roots', {}).get('base', ['/usr/share/salt-formulas/env'])[0])
 
@@ -123,21 +125,21 @@ class SaltWheel(Wheel):
             # implement functions
             if fn in ['state.apply', 'state.sls']:
                 if isinstance(values, list):
-                     states=values
-                elif isinstance(values, ruamel.yaml.comments.CommentedMap) or isinstance(values, dict): # RAW SLS FILE ON VALUES
-                    with open('top.sls','w') as out:
-                      out.write(''.join((
-                     "base:\n",
-                     "  '*':\n",
-                     "     - {}\n".format(wheel_nm)
-                      )))
-                    with open('{}.sls'.format(wheel_nm),'w') as out:
-                       ruamel.yaml.dump(values, out, Dumper=ruamel.yaml.RoundTripDumper)
+                    states = values
+                elif isinstance(values, ruamel.yaml.comments.CommentedMap) or isinstance(values, dict):  # RAW SLS FILE ON VALUES
+                    with open('top.sls', 'w') as out:
+                        out.write(''.join((
+                            "base:\n",
+                            "  '*':\n",
+                            "     - {}\n".format(wheel_nm)
+                        )))
+                    with open('{}.sls'.format(wheel_nm), 'w') as out:
+                        ruamel.yaml.dump(values, out, Dumper=ruamel.yaml.RoundTripDumper)
 
-            pillar = { 'pillar': self.config.get('pillar', {}) }
-            args   = [ ','.join(states) ]
+            pillar = {'pillar': self.config.get('pillar', {})}
+            args = [','.join(states)]
             kwargs = self.safeMergeDict(self.salt_opts, wheel.get('config', {}).get('salt', {}).get('opts', {}))
-            kwargs = self.safeMergeDict( kwargs, pillar )
+            kwargs = self.safeMergeDict(kwargs, pillar)
 
             ret = salt_c.cmd(fn, *args, **kwargs)
 
@@ -145,24 +147,23 @@ class SaltWheel(Wheel):
             _retcode = 0
             for v in ret.values():
                 if not v.get('result', True):
-                  _retcode = 1
-                  break
+                    _retcode = 1
+                    break
 
             salt.output.display_output(
-                    {'local': ret},
-                    out=ret.get('out', 'highstate'),
-                    opts=self.salt_config,
-                    _retcode=ret.get('retcode', _retcode))
+                {'local': ret},
+                out=ret.get('out', 'highstate'),
+                opts=self.salt_config,
+                _retcode=ret.get('retcode', _retcode))
 
-                      
             if self.salt_config.get('retcode_passthrough', False) and ret.get('retcode', _retcode) != 0:
-	        sys.exit(ret.get('retcode', _retcode))
+                sys.exit(ret.get('retcode', _retcode))
 
 
 # For testing:
 if __name__ == '__main__':
     pp = pprint.PrettyPrinter(indent=2, width=80)
-    config  = ruamel.yaml.YAML().load("""\
+    config = ruamel.yaml.YAML().load("""\
         enabled: true
         engine: salt
         image:  tcpcloud/salt-formulas
@@ -285,5 +286,5 @@ if __name__ == '__main__':
 #   source /etc/lsb-release
 #   echo "deb https://repos.influxdata.com/${DISTRIB_ID,,} ${DISTRIB_CODENAME} stable" | sudo tee /etc/apt/sources.list.d/influxdb.list
 #   sudo apt-get update && sudo apt-get install influxdb
-#   influxd & 
+#   influxd &
 # /wh/wheelhouse.py
