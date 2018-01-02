@@ -86,10 +86,11 @@ class SaltWheel(Wheel):
         file_roots:
           base:
            - {}
+        retcode_passthrough: true
         """.format('/usr/share/salt-formulas/env')))
         __opts__ = self.safeMergeDict(__opts__, default_config)
         __opts__ = self.safeMergeDict(__opts__, self.config.get('config', {}).get('salt', {}).get('minion', {}) )
-        #__opts__ = self.safeMergeDict(__opts__, minion_config)
+        # TODO, __opts__ = self.safeMergeDict(__opts__, pillar:salt:minion:config)
         self.salt_config = __opts__
         return salt.client.Caller(mopts=self.salt_config)
 
@@ -185,7 +186,6 @@ if __name__ == '__main__':
             salt:
               minion:
                   config:
-                    retcode_passthrough: true
                     # This section is only needed if salt state ``influxdb_continuous_query.present`` is used
                     influxdb:
                       host: localhost
