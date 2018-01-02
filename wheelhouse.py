@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 import os
+import sys
 import salt.client
 import salt.config
 import salt.output
@@ -138,18 +139,26 @@ class SaltWheel(Wheel):
             kwargs = self.safeMergeDict( kwargs, pillar )
 
             ret = salt_c.cmd(fn, *args, **kwargs)
+
+            # workaround, check for failed states:
+            _retcode = 0
+            for v in ret.values():
+                if not v.get('result', True):
+                  _retcode = 1
+                  break
+
             salt.output.display_output(
                     {'local': ret},
                     out=ret.get('out', 'highstate'),
                     opts=self.salt_config,
-                    _retcode=ret.get('retcode', 0))
+                    _retcode=ret.get('retcode', _retcode))
 
-
+                      
+            if self.salt_config.get('retcode_passthrough', False) and ret.get('retcode', _retcode) != 0:
+	        sys.exit(ret.get('retcode', _retcode))
 
 
 # For testing:
-# docker run -v $PWD:/wheelhouse -ti tcpcloud/salt-formulas /bin/bash
-# /wheelhouse/wheelhouse.py
 if __name__ == '__main__':
     pp = pprint.PrettyPrinter(indent=2, width=80)
     config  = ruamel.yaml.YAML().load("""\
@@ -176,6 +185,7 @@ if __name__ == '__main__':
             salt:
               minion:
                   config:
+                    retcode_passthrough: true
                     # This section is only needed if salt state ``influxdb_continuous_query.present`` is used
                     influxdb:
                       host: localhost
@@ -267,3 +277,13 @@ if __name__ == '__main__':
     """)
     recipe = ['initdb', 'dummy_test']
     SaltWheel(config, recipe=recipe).runner()
+
+# Execute tests:
+# docker run -v $PWD:/wh -ti epcim/salt-formulas /bin/bash
+# install influxdb:
+#   curl -sL https://repos.influxdata.com/influxdb.key | sudo apt-key add -
+#   source /etc/lsb-release
+#   echo "deb https://repos.influxdata.com/${DISTRIB_ID,,} ${DISTRIB_CODENAME} stable" | sudo tee /etc/apt/sources.list.d/influxdb.list
+#   sudo apt-get update && sudo apt-get install influxdb
+#   influxd & 
+# /wh/wheelhouse.py
