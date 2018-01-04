@@ -211,13 +211,15 @@ if __name__ == '__main__':
                             name: h2o_measurement
                             enabled: true
                             retention_policy:
-                            - name: rp_db1
+                            - name: rp_a_month
                               duration: 30d
                               replication: 1
                               is_default: true
                             continuous_query:
                                 cq_avg_bus_passengers: >-
-                                    SELECT mean("h2o_quality") INTO "h2o_measurement"."three_weeks"."average_quality" FROM "bus_data" GROUP BY time(1h)
+                                    SELECT mean("h2o_quality") INTO "h2o_measurement"."rp_a_month"."average_quality" FROM "bus_data" GROUP BY time(1h)
+                                cq_br_downsample_all_hourly: >-
+                                    SELECT mean(*) INTO "h2o_measurement"."autogen".:MEASUREMENT FROM /.*/ GROUP BY time(60m),*
                             query:
                                 drop_h2o: >-
                                     DROP MEASUREMENT h2o_measurement
