@@ -285,8 +285,8 @@ if __name__ == '__main__':
 # docker run -v $PWD:/wh -ti epcim/salt-formulas /bin/bash
 # install influxdb:
 #   curl -sL https://repos.influxdata.com/influxdb.key | sudo apt-key add -
-#   source /etc/lsb-release
-#   echo "deb https://repos.influxdata.com/${DISTRIB_ID,,} ${DISTRIB_CODENAME} stable" | sudo tee /etc/apt/sources.list.d/influxdb.list
+#   source /etc/os-release
+#   echo "deb https://repos.influxdata.com/${ID,,} ${VERSION_CODENAME:- stretch} stable" | sudo tee /etc/apt/sources.list.d/influxdb.list
 #   sudo apt-get update && sudo apt-get install influxdb
 #   influxd &
 # /wh/wheelhouse.py
