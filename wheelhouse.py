@@ -1,17 +1,5 @@
 #!/usr/bin/env python
 
-# Execute demo:
-# docker run -v $PWD:/wh -ti epcim/salt-formulas /bin/bash
-# docker run -v $PWD:/wh -ti epcim/salt-formulas:ubuntu-bionic-saltformulas-2018.2 /bin/bash
-# install influxdb:
-#   curl -sL https://repos.influxdata.com/influxdb.key | sudo apt-key add -
-#   source /etc/os-release
-#   echo "deb https://repos.influxdata.com/${ID,,} ${VERSION_CODENAME:- stretch} stable" | sudo tee /etc/apt/sources.list.d/influxdb.list
-#   sudo apt-get update && sudo apt-get install influxdb
-#   influxd &
-# /wh/wheelhouse.py
-
-
 import os
 import sys
 import salt.client
@@ -76,6 +64,7 @@ class Toolbox():
         #                default=None,
         #                help='Comma separated list of job names to execute')
         wh.add_argument('-t', '--test', action='store_true',
+                        default=False,
                         help='Run embedded pillar validation and tests')
         wh.add_argument('--dry', action='store_true',
                         help='Execute engine in a "dry" mode')
@@ -378,6 +367,7 @@ if __name__ == '__main__':
             Toolbox.merge_dict(config_override, Toolbox.arg2config(a))
 
     jobs = []
+    config = {}
 
     # apply args
     if args.engine:
@@ -398,11 +388,12 @@ if __name__ == '__main__':
     Toolbox.merge_dict(config, config_override)
 
     # Make it happen
-    if config['engine'] == 'salt':
-        # trigge Salt wheel
-        SaltWheel(config, jobs=jobs).runner()
-    else:
-      pass
+    if len(jobs) > 1 and len(config) >1:
+        if config.get('engine', 'salt') == 'salt':
+            # trigge Salt wheel
+            SaltWheel(config, jobs=jobs).runner()
+        elif True:
+            pass
 
     #TODO, should we ignore errors?
     #RED_ERROR = termcolor.colored('FATAL ERROR:', 'red')
