@@ -28,16 +28,16 @@ The structure is simple as:
     wheelhose:
       engine: [salt|chef|ansible]
       job:
-        <job_name>:
+        {job_name}:
           wheel:
-            - <wheel_name> (job|role|playbooks)
+            - {wheel_name} (like job|role|recipe|playbook name)
 
       pillar:
-        <metadata|attributes|pillars|variables>
+        {metadata|attributes|pillars|variables}
       wheel:
-        <wheel_name>:
-           <state name|module function|recipe name>:
-             - args
+         {wheel_name}:
+           {actual state|formula|module|function|recipe|cookbook}:
+             {args as list/dict/value}
 
 The jobs is a collection of individual "wheels" defined later from your favourite config.mgmt tool.
 Wheels are responsible to apply `states` (in salt terminology, or `recipes` in chef world), etc...

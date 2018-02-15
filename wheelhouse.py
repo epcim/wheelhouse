@@ -1,5 +1,10 @@
 #!/usr/bin/env python
 
+# Author: Petr Michalec (epcim at apealive.net)
+# Source: https://github.com/epcim/wheelhouse
+# License: MIT
+# Version: 1.0
+
 import os
 import sys
 import salt.client
@@ -13,6 +18,42 @@ import select
 
 
 class Toolbox():
+
+    @staticmethod
+    def argparser():
+        parser = argparse.ArgumentParser(description=
+                                         "Wheelhouse script.\n"
+                                         "Usage: `cat wheelhouse.yaml | wheelhouse.py [args]`")
+        wh = parser.add_argument_group('Choosing what you want to execute')
+        wh.add_argument('jobs', nargs="*",
+                        help='Job names to execute')
+        wh.add_argument('-c', '--config',
+                        default=None,
+                        help='YAML file containing run instructions')
+        # PLACEHOLDER
+        #wh.add_argument('-j', '--jobs',
+        #                default=None,
+        #                help='Comma separated list of job names to execute')
+        # PLACEHOLDER
+        #at.add_argument('-e', '--engine-opts',
+        #                default=None,
+        #                help='Engine specific options')
+        wh.add_argument('-t', '--test', action='store_true',
+                        default=False,
+                        help='Run embedded pillar validation and tests')
+        wh.add_argument('--dry', action='store_true',
+                        help='Execute engine in a "dry" mode')
+        at = parser.add_argument_group('Any extra attributes will ones spec. in config file)')
+        # technically any string value on wheelhouse config can be overriden
+        at.add_argument('extra', nargs=argparse.REMAINDER)
+        # PLACEHOLDER
+        #pl = parser.add_argument_group('Pillar control arguments')
+        #pl.add_argument('-p', '--pillar-engine',
+        #                default=None,
+        #                help='Override pillar source or external if not in config')
+        #pl.add_argument('--pillar-etcd-url',
+        #                help='Override pillar source or external if not in config')
+        return parser
 
     @staticmethod
     def arg2config(arg):
@@ -48,33 +89,6 @@ class Toolbox():
             Toolbox.merge_dict(d1[k], d2[k])
         else:
             d1[k] = d2[k]
-
-    @staticmethod
-    def argparser():
-        parser = argparse.ArgumentParser(description=
-                                         "Wheelhouse script.\n"
-                                         "Usage: `cat wheelhouse.yaml | wheelhouse.py [args]`")
-        wh = parser.add_argument_group('Choosing what you want to execute')
-        wh.add_argument('jobs', nargs="*",
-                        help='Job names to execute')
-        wh.add_argument('-c', '--config',
-                        default=None,
-                        help='YAML file containing run instructions')
-        #wh.add_argument('-j', '--jobs',
-        #                default=None,
-        #                help='Comma separated list of job names to execute')
-        wh.add_argument('-t', '--test', action='store_true',
-                        default=False,
-                        help='Run embedded pillar validation and tests')
-        wh.add_argument('--dry', action='store_true',
-                        help='Execute engine in a "dry" mode')
-        at = parser.add_argument_group('Any extra attributes will ones spec. in config file)')
-        at.add_argument('-e', '--engine',
-                        default=None,
-                        help='Wheel engine to use.')
-        # technically any string value on wheelhouse config can be overriden
-        at.add_argument('extra', nargs=argparse.REMAINDER)
-        return parser
 
 
     @staticmethod
@@ -286,12 +300,12 @@ class SaltWheel(Wheel):
         Process individual wheel
 
         wheel:
-          <wheel_name>:
-             state.apply:
-               - test.ping
-             state.sls: { <sls> }
-             test.ping: []
-             ...
+            <wheel_name>:
+               state.apply:
+                - test.ping
+                state.sls: { <sls> }
+                test.ping: []
+                ...
         """
 
         for fn, values in wheel.items():
@@ -389,13 +403,13 @@ if __name__ == '__main__':
 
     # Make it happen
     if len(jobs) > 1 and len(config) >1:
-        if config.get('engine', 'salt') == 'salt':
+        if config.get('engine', '') == 'salt':
             # trigge Salt wheel
             SaltWheel(config, jobs=jobs).runner()
         elif True:
             pass
 
-    #TODO, should we ignore errors?
+    #TODO, should we go over some errors?
     #RED_ERROR = termcolor.colored('FATAL ERROR:', 'red')
     #if args.debug:
     #else:
