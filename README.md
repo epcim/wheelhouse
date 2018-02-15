@@ -47,15 +47,6 @@ Wheels are responsible to apply `states` (in salt terminology, or `recipes` in c
 * http://apealive.net/post/helm-charts-wheelhouse
 
 
-### side note
-
-I also find important to share metadata structure cross tools, so transition is possiblea and approach
-is similar. Assume it as PEP8 or FoodCritic for your metadata.
-
-For this motivation I set *FIXME, TBD TBD TBD* a repo with motivation to provide upstream
-shared metadata structure with tools for it's visualization, validation, schema check an descriptio of it's attributes.
-
-
 
 ## Usage
 
