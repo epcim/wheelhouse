@@ -96,9 +96,9 @@ class Toolbox():
         return ruamel.yaml.YAML().load("""\
             enabled: true
             engine: salt
-            image:  tcpcloud/salt-formulas
+            image: epcim/salt-formulas:wheelhouse-debian-stretch-salt-stable-formula-stable
             logging:
-              severity: info
+                severity: info
             job:
                 initdb:
                     wheel:
